@@ -177,32 +177,8 @@ void generateCert(const char *path)
 	addToIOQueue(NULL, 0, 0, cert);
 }
 
-void drawTicketFrame(const char *titleID)
-{
-	startNewFrame();
-	textToFrame(0, 0, "Title ID:");
-	textToFrame(1, 3, titleID[0] == '\0' ? "NOT SET" : titleID);
-	
-	if(titleID[0] == '\0')
-		textToFrame(3, 0, "You need to set the title ID to generate a fake ticket");
-	
-	int line = MAX_LINES - 3;
-	textToFrame(line--, 0, "Press " BUTTON_B " to return");
-	if(titleID[0] != '\0')
-		textToFrame(line--, 0, "Press " BUTTON_A " to continue");
-	lineToFrame(line, SCREEN_COLOR_WHITE);
-	
-	lineToFrame(MAX_LINES - 2, SCREEN_COLOR_WHITE);
-	textToFrame(MAX_LINES - 1, 0, "Press " BUTTON_LEFT " to set the title ID");
-	drawFrame();
-}
-
-void generateFakeTicket()
-{
-	char *dir = fileBrowserMenu();
-	if(dir == NULL)
-		return;
-	
+void generateFakeTicket(const char *dir, char *titleID)
+{	
 	char tikPath[1024];
 	strcpy(tikPath, dir);
 	strcat(tikPath, "title");
@@ -262,90 +238,65 @@ void generateFakeTicket()
 	uint64_t tid = ((TMD *)buf)->tid;
 	MEMFreeToDefaultHeap(buf);
 
-	char titleID[17];
-	hex(tid, 16, titleID);
+	if(titleID != NULL)
+		hex(tid, 16, titleID);
 	
-	drawTicketFrame(titleID);
+
+	showFrame();
 	
+	if(titleID[0] != '\0')
+	{
+		startNewFrame();
+		textToFrame(0, 0, "Generating fake ticket...");
+		drawFrame();
+		showFrame();
+		
+		strcpy(ptr, ".tik");
+
+		const TitleEntry *entry = getTitleEntryByTid(tid);
+		if(entry == NULL)
+		{
+			TitleEntry *te = getStaticTitleEntry();
+			te->tid = tid;
+			entry = te;
+		}
+
+		generateTik(tikPath, entry);
+
+		strcpy(ptr, ".cert");
+		generateCert(tikPath);
+		strcpy(ptr, ".tik");
+		
+		colorStartNewFrame(SCREEN_COLOR_D_GREEN);
+		textToFrame(0, 0, "Fake ticket generated on:");
+		char oldChar = tikPath[3];
+		tikPath[3] = '\0';
+		if(strcmp(tikPath, "fs:") == 0)
+		{
+			char *adjPath = tikPath + 15;
+			adjPath[0] = 's';
+			adjPath[1] = 'd';
+			adjPath[2] = ':';
+			textToFrame(1, 0, adjPath);
+		}
+		else
+		{
+			tikPath[3] = oldChar;
+			textToFrame(1, 0, tikPath);
+		}
+		
+		textToFrame(3, 0, "Press any key to return");
+		drawFrame();
+	}
 	while(AppRunning())
 	{
 		showFrame();
 		
 		if(app == APP_STATE_BACKGROUND)
 			continue;
-		if(app == APP_STATE_RETURNING)
-			drawTicketFrame(titleID);
+		//TODO: APP_STATE_RETURNING
 		
-		if(vpad.trigger & VPAD_BUTTON_A)
-		{
-			if(titleID[0] != '\0')
-			{
-				startNewFrame();
-				textToFrame(0, 0, "Generating fake ticket...");
-				drawFrame();
-				showFrame();
-				
-				strcpy(ptr, ".tik");
-
-				const TitleEntry *entry = getTitleEntryByTid(tid);
-				if(entry == NULL)
-				{
-					TitleEntry *te = getStaticTitleEntry();
-					te->tid = tid;
-					entry = te;
-				}
-
-				generateTik(tikPath, entry);
-
-				strcpy(ptr, ".cert");
-				generateCert(tikPath);
-				strcpy(ptr, ".tik");
-				
-				colorStartNewFrame(SCREEN_COLOR_D_GREEN);
-				textToFrame(0, 0, "Fake ticket generated on:");
-				char oldChar = tikPath[3];
-				tikPath[3] = '\0';
-				if(strcmp(tikPath, "fs:") == 0)
-				{
-					char *adjPath = tikPath + 15;
-					adjPath[0] = 's';
-					adjPath[1] = 'd';
-					adjPath[2] = ':';
-					textToFrame(1, 0, adjPath);
-				}
-				else
-				{
-					tikPath[3] = oldChar;
-					textToFrame(1, 0, tikPath);
-				}
-				
-				textToFrame(3, 0, "Press any key to return");
-				drawFrame();
-				
-				while(AppRunning())
-				{
-					showFrame();
-					
-					if(app == APP_STATE_BACKGROUND)
-						continue;
-					//TODO: APP_STATE_RETURNING
-					
-					if(vpad.trigger)
-						break;
-				}
-				return;
-			}
-		}
-		else if(vpad.trigger & VPAD_BUTTON_B)
-			return;
-		
-		if(vpad.trigger & VPAD_BUTTON_LEFT)
-		{
-			showKeyboard(KEYBOARD_LAYOUT_TID, KEYBOARD_TYPE_RESTRICTED, titleID, CHECK_HEXADECIMAL, 16, true, titleID, NULL);
-			toLowercase(titleID);
-			drawTicketFrame(titleID);
-		}
+		if(vpad.trigger)
+			break;
 	}
-
-	return;
 }

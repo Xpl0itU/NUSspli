@@ -24,6 +24,7 @@
 #include <installer.h>
 #include <renderer.h>
 #include <state.h>
+#include <ticket.h>
 #include <tmd.h>
 #include <utils.h>
 #include <menu/utils.h>
@@ -39,21 +40,24 @@ static void drawInstallerMenuFrame(const char *name, NUSDEV dev, bool keepFiles)
 	
 	textToFrame(0, 0, name);
 	
-	lineToFrame(MAX_LINES - 6, SCREEN_COLOR_WHITE);
-	textToFrame(MAX_LINES - 5, 0, "Press " BUTTON_A " to install to USB");
-	textToFrame(MAX_LINES - 4, 0, "Press " BUTTON_X " to install to NAND");
-	textToFrame(MAX_LINES - 3, 0, "Press " BUTTON_B " to return");
+	lineToFrame(MAX_LINES - 8, SCREEN_COLOR_WHITE);
+	textToFrame(MAX_LINES - 7, 0, "Press " BUTTON_A " to install to USB");
+	textToFrame(MAX_LINES - 6, 0, "Press " BUTTON_X " to install to NAND");
+	textToFrame(MAX_LINES - 5, 0, "Press " BUTTON_Y " to generate a fake <title.tik> file");
+	textToFrame(MAX_LINES - 4, 0, "Press " BUTTON_B " to return");
 	
-	lineToFrame(MAX_LINES - 2, SCREEN_COLOR_WHITE);
+	lineToFrame(MAX_LINES - 3, SCREEN_COLOR_WHITE);
 	if(dev != NUSDEV_SD)
-		textToFrame(MAX_LINES - 1, 0, "WARNING: Files on USB/NAND will always be deleted after installing!");
+		textToFrame(MAX_LINES - 2, 0, "WARNING: Files on USB/NAND will always be deleted after installing!");
 	else
 	{
 		char *toFrame = getToFrameBuffer();
 		strcpy(toFrame, "Press " BUTTON_LEFT " to ");
 		strcat(toFrame, keepFiles ? "delete" : "keep");
 		strcat(toFrame, " files after the installation");
-		textToFrame(MAX_LINES - 1, 0, toFrame);
+		textToFrame(MAX_LINES - 2, 0, toFrame);
+
+		textToFrame(MAX_LINES - 1, 0, "Press " BUTTON_RIGHT " to set the title ID");
 	}
 	
 	drawFrame();
@@ -100,6 +104,7 @@ void installerMenu(const char *dir)
 	NUSDEV dev = dir[3] == ':' ? dir[0] == 'u' ? NUSDEV_USB : NUSDEV_MLC : NUSDEV_SD;
 	bool keepFiles;
 	char name[strlen(dir) + 1];
+	char titleID[17];
 	if(dev == NUSDEV_SD)
 	{
 		keepFiles = true;
@@ -137,11 +142,20 @@ void installerMenu(const char *dir)
 				install(name, false, dev, dir, false, keepFiles);
 			return;
 		}
-		
+		if(vpad.trigger & VPAD_BUTTON_Y) 
+		{
+			generateFakeTicket(dir, titleID);
+			drawInstallerMenuFrame(name, dev, keepFiles);
+		}
 		if(vpad.trigger & VPAD_BUTTON_LEFT)
 		{
 			keepFiles = !keepFiles;
 			drawInstallerMenuFrame(name, dev, keepFiles);
+		}
+		if(vpad.trigger & VPAD_BUTTON_RIGHT)
+		{
+			showKeyboard(KEYBOARD_LAYOUT_TID, KEYBOARD_TYPE_RESTRICTED, titleID, CHECK_HEXADECIMAL, 16, true, titleID, NULL);
+			toLowercase(titleID);
 		}
 	}
 }

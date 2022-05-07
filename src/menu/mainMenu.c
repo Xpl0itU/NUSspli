@@ -53,10 +53,9 @@ static void drawMainMenuFrame()
 	
 	textToFrame(10, 0, "Press " BUTTON_A " to download content");
 	textToFrame(11, 0, "Press " BUTTON_X " to install content");
-	textToFrame(12, 0, "Press " BUTTON_Y " to generate a fake <title.tik> file");
-	textToFrame(13, 0, "Press " BUTTON_RIGHT " to uninstall a title");
-	textToFrame(14, 0, "Press " BUTTON_LEFT " for options");
-	textToFrame(15, 0, "Press " BUTTON_HOME " or " BUTTON_B " to exit");
+	textToFrame(12, 0, "Press " BUTTON_RIGHT " to uninstall a title");
+	textToFrame(13, 0, "Press " BUTTON_LEFT " for options");
+	textToFrame(14, 0, "Press " BUTTON_HOME " or " BUTTON_B " to exit");
 	
 	textToFrame(7, MAX_CHARS - 27, "Thanks to:");
 	textToFrame(8, MAX_CHARS - 26, "• E1ite007");
@@ -131,11 +130,6 @@ void mainMenu()
 			else if(vpad.trigger & VPAD_BUTTON_LEFT)
 			{
 				configMenu();
-				drawMainMenuFrame();
-			}
-			else if(vpad.trigger & VPAD_BUTTON_Y)
-			{
-				generateFakeTicket();
 				drawMainMenuFrame();
 			}
 			else if(vpad.trigger & VPAD_BUTTON_RIGHT)
