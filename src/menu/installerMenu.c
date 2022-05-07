@@ -145,7 +145,7 @@ void installerMenu(const char *dir)
 		if(vpad.trigger & VPAD_BUTTON_Y) 
 		{
 			generateFakeTicket(dir, titleID);
-			drawInstallerMenuFrame(name, dev, keepFiles);
+			return;
 		}
 		if(vpad.trigger & VPAD_BUTTON_LEFT)
 		{

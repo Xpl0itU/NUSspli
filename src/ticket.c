@@ -241,7 +241,6 @@ void generateFakeTicket(const char *dir, char *titleID)
 	if(titleID != NULL)
 		hex(tid, 16, titleID);
 	
-
 	showFrame();
 	
 	if(titleID[0] != '\0')
@@ -287,16 +286,17 @@ void generateFakeTicket(const char *dir, char *titleID)
 		
 		textToFrame(3, 0, "Press any key to return");
 		drawFrame();
+		while(AppRunning())
+		{	
+			if(app == APP_STATE_BACKGROUND)
+				continue;
+			//TODO: APP_STATE_RETURNING
+
+			showFrame();
+			
+			if(vpad.trigger)
+				break;
+		}
 	}
-	while(AppRunning())
-	{
-		showFrame();
-		
-		if(app == APP_STATE_BACKGROUND)
-			continue;
-		//TODO: APP_STATE_RETURNING
-		
-		if(vpad.trigger)
-			break;
-	}
+	return;
 }
