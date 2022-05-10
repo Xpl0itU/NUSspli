@@ -165,7 +165,7 @@ static void drawPDDemoFrame(const TitleEntry *entry, bool inst)
 
 #include <inttypes.h>
 
-void predownloadMenu(const TitleEntry *entry)
+void predownloadMenu(const TitleEntry *entry, bool showScreen)
 {
 	MCPTitleListType titleList;
 	bool installed = isInstalled(entry, &titleList);
@@ -199,7 +199,7 @@ downloadTMD:
 		strcat(downloadUrl, titleVer);
 	}
 	
-	if(downloadFile(downloadUrl, "TMD", NULL, FILE_TYPE_TMD | FILE_TYPE_TORAM, true))
+	if(downloadFile(downloadUrl, "TMD", NULL, static_cast<FileType>(FILE_TYPE_TMD | FILE_TYPE_TORAM), true))
 	{
 		clearRamBuf();
 		debugPrintf("Error downloading TMD");
@@ -236,7 +236,7 @@ naNedNa:
 			return;
 		}
 		
-		if(usbMounted && vpad.trigger & VPAD_BUTTON_A)
+		if((usbMounted && vpad.trigger & VPAD_BUTTON_A) || showScreen)
 		{
 			inst = toUSB = true;
 			loop = false;

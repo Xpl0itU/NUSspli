@@ -40,12 +40,16 @@
 #include <coreinit/mcp.h>
 #include <coreinit/memdefaultheap.h>
 
+#include <algorithm>
+#include <vector>
+
 #define MAX_TITLEBROWSER_LINES (MAX_LINES - 4)
 
 static TitleEntry **filteredTitleEntries;
 static size_t filteredTitleEntrySize;
 static size_t oldPos;
 
+std::vector <TitleEntry *> titleQueue;
 static void drawTBMenuFrame(const TITLE_CATEGORY tab, const size_t pos, const size_t cursor, char *search)
 {
 	startNewFrame();
@@ -337,6 +341,20 @@ void titleBrowserMenu()
 				titleBrowserMenu();
 			return;
 		}
+		if(vpad.trigger & VPAD_BUTTON_MINUS)
+		{
+			titleQueue.emplace_back(filteredTitleEntries[cursor + pos]);
+			std::sort(titleQueue.begin(), titleQueue.end());
+    		titleQueue.erase(std::unique(titleQueue.begin(), titleQueue.end()), titleQueue.end());				
+		}
+		if(vpad.trigger & VPAD_BUTTON_PLUS)
+		{
+			for(TitleEntry *e : titleQueue) {
+				debugPrintf("%s", e->name);
+				predownloadMenu(e, false);
+			}
+				
+		}
 		if(vpad.trigger & VPAD_BUTTON_Y)
 		{
 			char oldSearch[sizeof(search)];
@@ -390,6 +408,6 @@ void titleBrowserMenu()
 		return;
 	}
 	
-	predownloadMenu(entry);
+	predownloadMenu(entry, true);
 	MEMFreeToDefaultHeap(filteredTitleEntries);
 }

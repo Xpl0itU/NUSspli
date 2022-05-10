@@ -54,6 +54,6 @@ bool downloadMenu()
 	if(entry == NULL)
 		entry = &e;
 	
-	predownloadMenu(entry);
+	predownloadMenu(entry, true);
 	return true;
 }
