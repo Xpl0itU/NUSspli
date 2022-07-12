@@ -21,16 +21,15 @@
 
 #include <wut-fixups.h>
 
-#include <openssl/md5.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#include <crypto.h>
+#include <openssl/evp.h>
+
 #include <file.h>
-#include <filesystem.h>
 #include <state.h>
+#include <staticMem.h>
 #include <utils.h>
 
 #include <coreinit/mcp.h>
@@ -70,25 +69,13 @@ bool sanityCheck()
 			return false;
 		}
 
-		if(title.path == NULL || strlen(title.path) != 46)
+		if(strlen(title.path) != 46)
 		{
 			debugPrintf("Sanity error: Incorrect length of path");
 			return false;
 		}
 
-		title.path[16] = '\0';
-		bool isUsb;
-		if(strcmp(title.path, "/vol/storage_usb") == 0)
-			isUsb = true;
-		else if(strcmp(title.path, "/vol/storage_mlc") == 0)
-			isUsb = false;
-		else
-		{
-			debugPrintf("Can't determine storage device (%s)", title.path);
-			return false;
-		}
-
-		char newPath[128];
+		char *newPath = getStaticPathBuffer(0);
 		FILE *f;
 		size_t s;
 		void *buf;
@@ -96,23 +83,13 @@ bool sanityCheck()
 		bool ret = true;
 		bool br = false;
 
-		if(isUsb)
-		{
-			mountUSB();
-			strcpy(newPath, "fs:/vol/usb");
-		}
-		else
-		{
-			mountMLC();
-			strcpy(newPath, "fs:/vol/mlc");
-		}
-
-		strcpy(newPath + 11, title.path + 18);
+		strcpy(newPath, title.path);
 		strcat(newPath, "/meta/");
+		char *pr = newPath + strlen(newPath);
 
 		for(int i = 0; !br && i < MD5_FILES; ++i)
 		{
-			strcpy(newPath + 38, md5File[i]);
+			strcpy(pr, md5File[i]);
 			f = fopen(newPath, "rb+");
 			if(f == NULL)
 			{
@@ -151,11 +128,6 @@ bool sanityCheck()
 			MEMFreeToDefaultHeap(buf);
 			fclose(f);
 		}
-
-		if(isUsb)
-			unmountUSB();
-		else
-			unmountMLC();
 
         t = OSGetTime() - t;
 		addEntropy(&t, sizeof(OSTime));
